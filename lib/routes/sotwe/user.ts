@@ -96,15 +96,24 @@ async function handler(ctx) {
         false
     );
 
-    const items = (data.data || []).map((item) => ({
-        title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
+    const profileItem = {
+        title: `${data.info.name} @${data.info.screenName}`,
+        description: `<img src="${data.info.profileImageThumbnail}"><br>${data.info.description || ''}`,
+        link: `${baseUrl}/${id}`,
+        pubDate: parseDate(data.info.createdAt, 'x'),
+    };
+
+    const timelineItems = (data.data || []).map((item) => ({
+        title: sanitizeHtml(item.text.split('\n')[0] || '', { allowedTags: [], allowedAttributes: {} }),
         description: renderDescription(item),
         link: `https://x.com/${id}/status/${item.id}`,
         pubDate: parseDate(item.createdAt, 'x'),
     }));
 
+    const items = [profileItem, ...timelineItems];
+
     return {
-        title: `Twitter - ${data.info.name} @${data.info.screenName}`,
+        title: `${data.info.name} @${data.info.screenName} - Twitter Profile | Sotwe`,
         description: data.info.description,
         link: `${baseUrl}/${id}`,
         image: data.info.profileImageThumbnail,
