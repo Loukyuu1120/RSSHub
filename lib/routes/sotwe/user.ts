@@ -67,7 +67,7 @@ async function handler(ctx) {
                 json: {
                     cmd: 'request.get',
                     url: apiUrl,
-                    session,               // 固定 session
+                    session, // 固定 session
                     maxTimeout: 60000,
                 },
                 responseType: 'json',
@@ -85,8 +85,8 @@ async function handler(ctx) {
                 const jsonStr = body.substring(preStart + 5, preEnd);
                 try {
                     jsonData = JSON.parse(jsonStr);
-                } catch (e) {
-                    logger.error('JSON parse error from Flaresolverr:', e);
+                } catch (error) {
+                    logger.error('JSON parse error from Flaresolverr:', error);
                 }
             }
 
