@@ -96,24 +96,28 @@ async function handler(ctx) {
         false
     );
 
-    const profileItem = {
-        title: `${data.info.name} @${data.info.screenName}`,
-        description: `<img src="${data.info.profileImageThumbnail}"><br>${data.info.description || ''}`,
-        link: `${baseUrl}/${id}`,
-        pubDate: parseDate(data.info.createdAt, 'x'),
-    };
+    if (!data || !data.info) {
+        const profileId = id;
+        const profileImage = '';
 
-    const timelineItems = (data.data || []).map((item) => ({
-        title: sanitizeHtml(item.text.split('\n')[0] || '', { allowedTags: [], allowedAttributes: {} }),
+        return {
+            title: `Twitter @${profileId}`,
+            description: `Twitter @${profileId}`,
+            link: `${baseUrl}/${profileId}`,
+            image: profileImage,
+            item: [],
+        };
+    }
+    
+    const items = data.data.map((item) => ({
+        title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
         description: renderDescription(item),
         link: `https://x.com/${id}/status/${item.id}`,
         pubDate: parseDate(item.createdAt, 'x'),
     }));
 
-    const items = [profileItem, ...timelineItems];
-
     return {
-        title: `${data.info.name} @${data.info.screenName} - Twitter Profile | Sotwe`,
+        title: `Twitter - ${data.info.name} @${data.info.screenName}`,
         description: data.info.description,
         link: `${baseUrl}/${id}`,
         image: data.info.profileImageThumbnail,
