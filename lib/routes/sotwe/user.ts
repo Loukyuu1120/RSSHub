@@ -108,7 +108,7 @@ async function handler(ctx) {
             item: [],
         };
     }
-    
+
     const items = data.data.map((item) => ({
         title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
         description: renderDescription(item),
