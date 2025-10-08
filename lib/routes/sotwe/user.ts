@@ -1,11 +1,10 @@
 import { Route, ViewType } from '@/types';
-
 import { parseDate } from '@/utils/parse-date';
 import sanitizeHtml from 'sanitize-html';
-import puppeteer from '@/utils/puppeteer';
 import logger from '@/utils/logger';
 import cache from '@/utils/cache';
 import { config } from '@/config';
+import got from '@/utils/got';
 
 export const route: Route = {
     path: '/user/:id',
@@ -16,11 +15,8 @@ export const route: Route = {
     },
     features: {
         requireConfig: false,
-        requirePuppeteer: true,
+        requirePuppeteer: false,
         antiCrawler: true,
-        supportBT: false,
-        supportPodcast: false,
-        supportScihub: false,
     },
     radar: [
         {
@@ -56,32 +52,51 @@ const renderDescription = (item) =>
 async function handler(ctx) {
     const baseUrl = 'https://www.sotwe.com';
     const { id } = ctx.req.param();
+    const apiUrl = `${baseUrl}/api/v3/user/${id}/`;
 
     const data = await cache.tryGet(
         `sotwe:user:${id}`,
         async () => {
-            const browser = await puppeteer();
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
-            page.on('request', (request) => {
-                ['document', 'script', 'xhr', 'fetch'].includes(request.resourceType()) ? request.continue() : request.abort();
-            });
-            const apiUrl = `${baseUrl}/api/v3/user/${id}/`;
-            logger.http(`Requesting ${apiUrl}`);
-            await page.goto(apiUrl, {
-                waitUntil: 'domcontentloaded',
-            });
-            const response = await page.evaluate(() => document.documentElement.textContent);
-            await page.close();
-            await browser.close();
+            logger.http(`Requesting via FlareSolverr: ${apiUrl}`);
 
-            return JSON.parse(response || '{}');
+            const flaresolverrUrl = process.env.FLARESOLVERR_URL || 'http://127.0.0.1:8191'; // ✅ API Url
+            const session = process.env.FLARESOLVERR_SESSION || 'default_session'; // ✅ 固定 session
+
+            // 调用 Flaresolverr
+            const { data: res } = await got.post(flaresolverrUrl + '/v1', {
+                json: {
+                    cmd: 'request.get',
+                    url: apiUrl,
+                    session,               // 固定 session
+                    maxTimeout: 60000,
+                },
+                responseType: 'json',
+            });
+
+            if (!res || res.status !== 'ok') {
+                throw new Error('Flaresolverr request failed: ' + JSON.stringify(res));
+            }
+
+            const body = res.solution.response;
+            let jsonData = {};
+            const preStart = body.indexOf('<pre>');
+            const preEnd = body.indexOf('</pre>');
+            if (preStart !== -1 && preEnd !== -1) {
+                const jsonStr = body.substring(preStart + 5, preEnd);
+                try {
+                    jsonData = JSON.parse(jsonStr);
+                } catch (e) {
+                    logger.error('JSON parse error from Flaresolverr:', e);
+                }
+            }
+
+            return jsonData;
         },
         config.cache.routeExpire,
         false
     );
 
-    const items = data.data.map((item) => ({
+    const items = (data.data || []).map((item) => ({
         title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
         description: renderDescription(item),
         link: `https://x.com/${id}/status/${item.id}`,
@@ -89,7 +104,7 @@ async function handler(ctx) {
     }));
 
     return {
-        title: `${data.info.name} @${data.info.screenName} - Twitter Profile | Sotwe`,
+        title: `Twitter - ${data.info.name} @${data.info.screenName}`,
         description: data.info.description,
         link: `${baseUrl}/${id}`,
         image: data.info.profileImageThumbnail,
