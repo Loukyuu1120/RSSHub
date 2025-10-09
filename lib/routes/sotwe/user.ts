@@ -47,7 +47,7 @@ const renderMedia = (mediaEntities) =>
         .join('<br>');
 
 const renderDescription = (item) =>
-    `${renderMedia(item.mediaEntities)}<br>${item.text.replaceAll('\n', '<br>')}${item.quotedStatus ? `<br>${renderDescription(item.quotedStatus)}` : ''}${item.retweetedStatus ? `<br>${renderDescription(item.retweetedStatus)}` : ''}`;
+    `${renderMedia(item.mediaEntities)}<br>${item.text.replaceAll('\n', '<br>')}${item.quotedStatus ? `<br>${renderDescription(item.quotedStatus)}` : ''}${item.retweetedStatus ? `<br>${renderDescription(item.retweetedStatus)}` : ''}${(item.conversation || []).map(c => `<br>${renderDescription(c)}`).join('')}`;
 
 async function handler(ctx) {
     const baseUrl = 'https://www.sotwe.com';
