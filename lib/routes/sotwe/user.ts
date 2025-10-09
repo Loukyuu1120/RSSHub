@@ -96,20 +96,7 @@ async function handler(ctx) {
         false
     );
 
-    if (!data || !data.info) {
-        const profileId = id;
-        const profileImage = '';
-
-        return {
-            title: `Twitter @${profileId}`,
-            description: `Twitter @${profileId}`,
-            link: `${baseUrl}/${profileId}`,
-            image: profileImage,
-            item: [],
-        };
-    }
-
-    const items = data.data.map((item) => ({
+    const items = (data.data || []).map((item) => ({
         title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
         description: renderDescription(item),
         link: `https://x.com/${id}/status/${item.id}`,
@@ -122,5 +109,6 @@ async function handler(ctx) {
         link: `${baseUrl}/${id}`,
         image: data.info.profileImageThumbnail,
         item: items,
+        allowEmpty: true,
     };
 }
