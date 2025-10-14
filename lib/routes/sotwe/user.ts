@@ -57,26 +57,35 @@ async function handler(ctx) {
     const data = await cache.tryGet(
         `sotwe:user:${id}`,
         async () => {
-            logger.http(`Requesting via FlareSolverr: ${apiUrl}`);
+            logger.http(`Requesting via FlareSolverr (shared cookies, no session): ${apiUrl}`);
 
-            const flaresolverrUrl = process.env.FLARESOLVERR_URL || 'http://127.0.0.1:8191'; // ✅ API Url
-            const session = process.env.FLARESOLVERR_SESSION || 'default_session'; // ✅ 固定 session
+            const flaresolverrUrl = process.env.FLARESOLVERR_URL || 'http://127.0.0.1:8191';
 
-            // 调用 Flaresolverr
-            const { data: res } = await got.post(flaresolverrUrl + '/v1', {
+            // ✅ cookies 共享
+            const globalCookieKey = 'flaresolverr:cookies:shared';
+            const sharedCookies = (await cache.get(globalCookieKey)) || [];
+
+            const { data: res } = await got.post(`${flaresolverrUrl}/v1`, {
                 json: {
                     cmd: 'request.get',
                     url: apiUrl,
-                    session, // 固定 session
+                    cookies: sharedCookies, // 使用全局 cookies
                     maxTimeout: 60000,
                 },
                 responseType: 'json',
             });
 
-            if (!res || res.status !== 'ok') {
+            if (!res || res.status !== 'ok' || !res.solution?.response) {
                 throw new Error('Flaresolverr request failed: ' + JSON.stringify(res));
             }
 
+            // ✅ 更新 cookies（仅当返回有 cookies）
+            if (res.solution.cookies?.length) {
+                await cache.set(globalCookieKey, res.solution.cookies, 4000);
+                logger.debug('Updated shared cookies for FlareSolverr');
+            }
+
+            // ✅ 解析返回内容
             const body = res.solution.response;
             let jsonData = {};
             const preStart = body.indexOf('<pre>');
@@ -86,7 +95,7 @@ async function handler(ctx) {
                 try {
                     jsonData = JSON.parse(jsonStr);
                 } catch (error) {
-                    logger.error('JSON parse error from Flaresolverr:', error);
+                    logger.error('JSON parse error from FlareSolverr:', error);
                 }
             }
 
@@ -95,6 +104,7 @@ async function handler(ctx) {
         config.cache.routeExpire,
         false
     );
+
 
     const items = (data.data || []).map((item) => ({
         title: sanitizeHtml(item.text.split('\n')[0], { allowedTags: [], allowedAttributes: {} }),
