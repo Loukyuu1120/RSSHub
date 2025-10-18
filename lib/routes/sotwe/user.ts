@@ -63,13 +63,13 @@ async function handler(ctx) {
 
             // ✅ cookies 共享
             const globalCookieKey = 'flaresolverr:cookies:shared';
-            const sharedCookies = (await cache.get(globalCookieKey)) || [];
+            // const sharedCookies = (await cache.get(globalCookieKey)) || [];
 
             const { data: res } = await got.post(`${flaresolverrUrl}/v1`, {
                 json: {
                     cmd: 'request.get',
                     url: apiUrl,
-                    cookies: sharedCookies, // 使用全局 cookies
+                    // cookies: sharedCookies, // 使用全局 cookies
                     maxTimeout: 60000,
                 },
                 responseType: 'json',
@@ -80,10 +80,10 @@ async function handler(ctx) {
             }
 
             // ✅ 更新 cookies（仅当返回有 cookies）
-            if (res.solution.cookies?.length) {
-                await cache.set(globalCookieKey, res.solution.cookies, 4000);
-                logger.debug('Updated shared cookies for FlareSolverr');
-            }
+            // if (res.solution.cookies?.length) {
+            //     await cache.set(globalCookieKey, res.solution.cookies, 4000);
+            //     logger.debug('Updated shared cookies for FlareSolverr');
+            // }
 
             // ✅ 解析返回内容
             const body = res.solution.response;
