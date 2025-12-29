@@ -1,12 +1,15 @@
-import { Route } from '@/types';
+import path from 'node:path';
+
+import * as cheerio from 'cheerio';
+
+import { config } from '@/config';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import ofetch from '@/utils/ofetch';
-import * as cheerio from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import { art } from '@/utils/render';
-import path from 'node:path';
-import { config } from '@/config';
-import { ArticleDetail, Category, CategoryArticle } from './types';
+
+import type { ArticleDetail, Category, CategoryArticle } from './types';
 
 const baseUrl = 'https://www.famitsu.com';
 
@@ -74,6 +77,7 @@ function renderJSON(c) {
         case 'ITEMIZATION':
         case 'ITEMIZATION_NUM':
         case 'NOLINK':
+        case 'PBOX':
         case 'STRING':
         case 'TWITTER':
         case 'YOUTUBE':
@@ -82,6 +86,7 @@ function renderJSON(c) {
         case 'BUTTON_ANDROID':
         case 'BUTTON_EC':
         case 'BUTTON_IOS':
+        case 'BUTTON_QUESTION':
         case 'BUTTON_TAB':
         case 'LINK':
         case 'LINK_TAB':

@@ -1,13 +1,17 @@
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { art } from '@/utils/render';
-import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn.js';
+
+import path from 'node:path';
+
+import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import utc from 'dayjs/plugin/utc.js';
-import path from 'node:path';
-import { CrowdfundingData, CrowdfundingDetailData, CrowdfundingDetailInfo, CrowdfundingItem, CrowdfundingList, DataResponse } from './types';
+
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+import { art } from '@/utils/render';
+
+import type { CrowdfundingData, CrowdfundingDetailData, CrowdfundingDetailInfo, CrowdfundingItem, CrowdfundingList, DataResponse } from './types';
 
 dayjs.extend(localizedFormat);
 dayjs.extend(timezone);
@@ -21,7 +25,7 @@ dayjs.extend(utc);
 export const getCrowdfundingList = async (): Promise<CrowdfundingList[]> => {
     const response = await ofetch<DataResponse<CrowdfundingData>>('https://m.mi.com/v1/crowd/crowd_home', {
         headers: {
-            referrer: 'https://m.mi.com/',
+            referer: 'https://m.mi.com/',
         },
         method: 'POST',
     });
@@ -38,7 +42,7 @@ export const getCrowdfundingItem = (item: CrowdfundingItem): Promise<Crowdfundin
     cache.tryGet(`mi:crowdfunding:${item.project_id}`, async () => {
         const response = await ofetch<DataResponse<CrowdfundingDetailData>>('https://m.mi.com/v1/crowd/crowd_detail', {
             headers: {
-                referrer: 'https://m.mi.com/crowdfunding/home',
+                referer: 'https://m.mi.com/crowdfunding/home',
             },
             method: 'POST',
             query: {
