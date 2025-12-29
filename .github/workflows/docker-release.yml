@@ -22,9 +22,13 @@ jobs:
         steps:
             - id: check-docker
               env:
-                  DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
-              if: ${{ env.DOCKER_USERNAME != '' }}
-              run: echo "defined=true" >> $GITHUB_OUTPUT
+                DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+              run: |
+                if [ -n "$DOCKER_USERNAME" ]; then
+                  echo "defined=true" >> $GITHUB_OUTPUT
+                else
+                  echo "defined=false" >> $GITHUB_OUTPUT
+                fi
     release:
         runs-on: ${{ matrix.runner }}
         needs: check-env
